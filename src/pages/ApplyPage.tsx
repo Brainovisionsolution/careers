@@ -1,45 +1,29 @@
 import { useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { User, Building, Globe, FileText, Send, CheckCircle, Loader2 } from 'lucide-react';
+import { User, Briefcase, Globe, FileText, Send, CheckCircle, Loader2 } from 'lucide-react';
 
-const expertiseOptions = ['Agentic AI', 'Quantum Computing', 'Machine Learning', 'Deep Learning', 'Generative AI', 'AWS Cloud', 'Azure Cloud', 'GCP Cloud', 'Full Stack Development', 'React/Node.js', 'Python', 'Data Science', 'MLOps', 'DevOps'];
-
-// Static job list
+// ------------------------------------------------------------
+// 1. Job list (matches Google Form dropdown)
+// ------------------------------------------------------------
 const jobs = [
-  {
-    id: "agentic-ai-trainer",
-    title: "Senior Agentic AI Trainer",
-    category: "AI Training"
-  },
-  {
-    id: "genai-trainer",
-    title: "Generative AI Trainer",
-    category: "AI Training"
-  },
-  {
-    id: "aws-cloud-trainer",
-    title: "AWS Cloud Trainer",
-    category: "Cloud Training"
-  },
-  {
-    id: "fullstack-trainer",
-    title: "Full Stack Trainer",
-    category: "Development Training"
-  },
-  {
-    id: "mlops-trainer",
-    title: "MLOps Trainer",
-    category: "DevOps Training"
-  },
-  {
-    id: "data-science-trainer",
-    title: "Data Science Trainer",
-    category: "Data Science Training"
-  }
+  { id: 'digital-marketing-ai-trainer', title: 'Digital Marketing with AI Trainer' },
+  { id: 'sales-marketing-executive', title: 'Sales & Marketing Executive' },
+  { id: 'technical-training-counselor', title: 'Technical Training Counselor' },
+  { id: 'business-development-executive', title: 'Business Development Executive (BDE)' },
+  { id: 'mentor', title: 'Mentor' },
+  { id: 'script-writers', title: 'Script writers' },
+  { id: 'prompt-engineer', title: 'Prompt engineer' },
+  { id: 'video-editor', title: 'Video Editor' },
+  { id: 'videographer', title: 'Videographer' },
+  { id: 'anchors', title: 'Anchors' },               // <-- Anchor role
 ];
 
-// Get webhook URL from environment variables
+const workModes = ['Work From Office', 'Remote', 'Hybrid', 'Free Launcher', 'Part Time', 'Other'];
+const experienceOptions = ['0', '1', '2', '3', '4', '5', 'Other'];
+const languageOptions = ['Telugu', 'English', 'Hindi'];
+const hostingOptions = ['Educational Sessions', 'Corporate Events', 'Live Shows', 'Webinars', 'YouTube Videos'];
+
 const WEBHOOK_URL = import.meta.env.VITE_GOOGLE_WEBHOOK_URL;
 
 export function ApplyPage() {
@@ -48,140 +32,153 @@ export function ApplyPage() {
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
+
+  // ------------------------------------------------------------
+  // 2. Form state – includes anchor‑specific fields
+  // ------------------------------------------------------------
   const [formData, setFormData] = useState({
     job_id: jobIdFromUrl || '',
     full_name: '',
+    mobile_number: '',
     email: '',
-    phone: '',
-    location: '',
+    current_city: '',
+    linkedin_profile: '',
     years_experience: '',
-    current_company: '',
-    current_designation: '',
-    linkedin_url: '',
-    github_url: '',
-    portfolio_url: '',
+    preferred_work_mode: '',
+    // ----- Anchor fields (only used if job_id === 'anchors') -----
+    anchor_languages: [] as string[],
+    anchor_hosted: [] as string[],
+    anchor_comfortable: '',
+    // ------------------------------------------------------------
     resume_url: '',
-    certifications: '',
-    expertise_areas: [] as string[],
-    cover_letter: ''
+    declaration: false,
   });
 
+  // ------------------------------------------------------------
+  // 3. Handlers
+  // ------------------------------------------------------------
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    const { name, value, type } = e.target;
+    if (type === 'checkbox') {
+      const checked = (e.target as HTMLInputElement).checked;
+      setFormData((prev) => ({ ...prev, [name]: checked }));
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
-  const toggleExpertise = (expertise: string) => {
-    setFormData((prev) => ({ 
-      ...prev, 
-      expertise_areas: prev.expertise_areas.includes(expertise) 
-        ? prev.expertise_areas.filter((e) => e !== expertise) 
-        : [...prev.expertise_areas, expertise] 
-    }));
+  const toggleArrayField = (field: 'anchor_languages' | 'anchor_hosted', value: string) => {
+    setFormData((prev) => {
+      const current = prev[field];
+      const updated = current.includes(value)
+        ? current.filter((item) => item !== value)
+        : [...current, value];
+      return { ...prev, [field]: updated };
+    });
   };
 
+  // ------------------------------------------------------------
+  // 4. Validation – includes checks for Anchor fields
+  // ------------------------------------------------------------
   const validateForm = () => {
-    // Webhook URL check
     if (!WEBHOOK_URL || WEBHOOK_URL === 'YOUR_WEBHOOK_URL_HERE') {
       setError('Application system is not properly configured. Please contact support.');
       return false;
     }
-    
-    // Email validation with regex
+    if (!formData.full_name.trim()) {
+      setError('Full Name is required.');
+      return false;
+    }
+    if (!formData.mobile_number.trim() || formData.mobile_number.replace(/\D/g, '').length < 10) {
+      setError('Please enter a valid mobile number (at least 10 digits).');
+      return false;
+    }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
-      setError('Please enter a valid email address');
+      setError('Please enter a valid email address.');
       return false;
     }
-    
-    // Phone validation (at least 10 digits)
-    const phoneDigits = formData.phone.replace(/\D/g, '');
-    if (phoneDigits.length < 10) {
-      setError('Please enter a valid phone number (at least 10 digits)');
-      return false;
-    }
-    
-    // Name validation
-    if (formData.full_name.trim().length < 2) {
-      setError('Please enter your full name');
-      return false;
-    }
-    
-    // Job selection validation
     if (!formData.job_id) {
-      setError('Please select a position');
+      setError('Please select a position.');
       return false;
     }
-    
+    if (!formData.declaration) {
+      setError('You must declare that the information provided is true.');
+      return false;
+    }
+    // ----- Anchor validation -----
+    if (formData.job_id === 'anchors') {
+      if (formData.anchor_languages.length === 0) {
+        setError('Please select at least one language you can host in.');
+        return false;
+      }
+      if (formData.anchor_hosted.length === 0) {
+        setError('Please select at least one type of event you have hosted.');
+        return false;
+      }
+      if (!formData.anchor_comfortable) {
+        setError('Please indicate if you are comfortable in front of a camera.');
+        return false;
+      }
+    }
     return true;
   };
 
+  // ------------------------------------------------------------
+  // 5. Submit
+  // ------------------------------------------------------------
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Validate form before submission
-    if (!validateForm()) {
-      return;
-    }
-    
+    if (!validateForm()) return;
+
     setLoading(true);
     setError('');
-    
+
     try {
-      // Get selected job title
-      const selectedJob = jobs.find(job => job.id === formData.job_id);
-      
-      // Prepare data for webhook with exact column structure
+      const selectedJob = jobs.find((job) => job.id === formData.job_id);
+
       const payload = {
         applied_at: new Date().toISOString(),
         job_id: formData.job_id,
+        job_title: selectedJob?.title || '',
         full_name: formData.full_name,
+        mobile_number: formData.mobile_number,
         email: formData.email,
-        phone: formData.phone,
-        location: formData.location || '',
-        years_experience: formData.years_experience ? parseInt(formData.years_experience) : null,
-        current_company: formData.current_company || '',
-        current_designation: formData.current_designation || '',
-        linkedin_url: formData.linkedin_url || '',
-        github_url: formData.github_url || '',
-        portfolio_url: formData.portfolio_url || '',
+        current_city: formData.current_city || '',
+        linkedin_profile: formData.linkedin_profile || '',
+        years_experience: formData.years_experience || '',
+        preferred_work_mode: formData.preferred_work_mode || '',
+        // Anchor fields (may be empty for other roles)
+        anchor_languages: formData.anchor_languages.join(', '),
+        anchor_hosted: formData.anchor_hosted.join(', '),
+        anchor_comfortable: formData.anchor_comfortable || '',
         resume_url: formData.resume_url || '',
-        certifications: formData.certifications
-          ? formData.certifications.split(',').map(c => c.trim()).join(', ')
-          : '',
-        expertise_areas: formData.expertise_areas.join(', '),
-        cover_letter: formData.cover_letter || ''
+        declaration: formData.declaration ? 'Yes' : 'No',
       };
-      
-      // CORS-safe fetch for Google Apps Script
+
       await fetch(WEBHOOK_URL, {
-        method: "POST",
-        mode: "no-cors",
-        headers: {
-          "Content-Type": "text/plain",
-        },
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain' },
         body: JSON.stringify(payload),
       });
-      
-      // Reset form on success
+
+      // Reset form
       setFormData({
         job_id: '',
         full_name: '',
+        mobile_number: '',
         email: '',
-        phone: '',
-        location: '',
+        current_city: '',
+        linkedin_profile: '',
         years_experience: '',
-        current_company: '',
-        current_designation: '',
-        linkedin_url: '',
-        github_url: '',
-        portfolio_url: '',
+        preferred_work_mode: '',
+        anchor_languages: [],
+        anchor_hosted: [],
+        anchor_comfortable: '',
         resume_url: '',
-        certifications: '',
-        expertise_areas: [],
-        cover_letter: ''
+        declaration: false,
       });
-      
       setSubmitted(true);
     } catch (err) {
       console.error('Error submitting application:', err);
@@ -191,52 +188,83 @@ export function ApplyPage() {
     }
   };
 
+  // ------------------------------------------------------------
+  // 6. Success screen
+  // ------------------------------------------------------------
   if (submitted) {
     return (
       <main className="pt-20 lg:pt-24 min-h-screen bg-slate-50 flex items-center justify-center px-4">
-        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5 }} className="max-w-md w-full text-center">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
+          className="max-w-md w-full text-center"
+        >
           <div className="card p-8 lg:p-12">
             <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6">
               <CheckCircle className="w-10 h-10 text-emerald-600" />
             </div>
             <h2 className="text-2xl font-bold text-slate-900 mb-3">Application Submitted!</h2>
-            <p className="text-slate-600 mb-6">Thank you for your interest. Our HR team will review your application within 3-5 business days.</p>
-            <Link to="/careers" className="btn-primary inline-block">View Other Positions</Link>
+            <p className="text-slate-600 mb-6">
+              Thank you for your interest. Our HR team will review your application within 3-5 business days.
+            </p>
+            <Link to="/careers" className="btn-primary inline-block">
+              View Other Positions
+            </Link>
           </div>
         </motion.div>
       </main>
     );
   }
 
+  const isAnchor = formData.job_id === 'anchors';
+
+  // ------------------------------------------------------------
+  // 7. Main form
+  // ------------------------------------------------------------
   return (
     <main className="pt-20 lg:pt-24 min-h-screen bg-slate-50">
       <section className="bg-gradient-to-r from-slate-900 to-slate-800 py-16 lg:py-20">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
             <h1 className="text-3xl lg:text-4xl font-bold text-white mb-4">Apply Now</h1>
-            <p className="text-slate-300 text-lg">Take the first step towards an exciting career in technology education</p>
+            <p className="text-slate-300 text-lg">Join Brainovision Solutions India Pvt. Ltd.</p>
           </motion.div>
         </div>
       </section>
 
       <section className="py-12 lg:py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.form initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }} onSubmit={handleSubmit} className="space-y-6">
+          <motion.form
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            onSubmit={handleSubmit}
+            className="space-y-6"
+          >
+            {/* Position */}
             <div className="card p-6 lg:p-8">
               <h3 className="font-semibold text-slate-900 mb-4 flex items-center gap-2">
-                <FileText className="w-5 h-5 text-blue-600" />
+                <Briefcase className="w-5 h-5 text-blue-600" />
                 Position Applied For
               </h3>
-              <select name="job_id" value={formData.job_id} onChange={handleChange} required className="input-field">
+              <select
+                name="job_id"
+                value={formData.job_id}
+                onChange={handleChange}
+                required
+                className="input-field"
+              >
                 <option value="">Select a position</option>
                 {jobs.map((job) => (
                   <option key={job.id} value={job.id}>
-                    {job.title} - {job.category}
+                    {job.title}
                   </option>
                 ))}
               </select>
             </div>
 
+            {/* Personal Information */}
             <div className="card p-6 lg:p-8">
               <h3 className="font-semibold text-slate-900 mb-4 flex items-center gap-2">
                 <User className="w-5 h-5 text-blue-600" />
@@ -244,114 +272,242 @@ export function ApplyPage() {
               </h3>
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Full Name *</label>
-                  <input type="text" name="full_name" value={formData.full_name} onChange={handleChange} required className="input-field" placeholder="John Doe" />
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    Full Name <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="full_name"
+                    value={formData.full_name}
+                    onChange={handleChange}
+                    required
+                    className="input-field"
+                    placeholder="John Doe"
+                  />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Email *</label>
-                  <input type="email" name="email" value={formData.email} onChange={handleChange} required className="input-field" placeholder="john@example.com" />
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    Mobile Number <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="tel"
+                    name="mobile_number"
+                    value={formData.mobile_number}
+                    onChange={handleChange}
+                    required
+                    className="input-field"
+                    placeholder="+91 98765 43210"
+                  />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Phone Number *</label>
-                  <input type="tel" name="phone" value={formData.phone} onChange={handleChange} required className="input-field" placeholder="+91 98765 43210" />
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    Email Address <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    required
+                    className="input-field"
+                    placeholder="john@example.com"
+                  />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Location</label>
-                  <input type="text" name="location" value={formData.location} onChange={handleChange} className="input-field" placeholder="Hyderabad, India" />
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Current City</label>
+                  <input
+                    type="text"
+                    name="current_city"
+                    value={formData.current_city}
+                    onChange={handleChange}
+                    className="input-field"
+                    placeholder="Hyderabad, India"
+                  />
                 </div>
               </div>
             </div>
 
-            <div className="card p-6 lg:p-8">
-              <h3 className="font-semibold text-slate-900 mb-4 flex items-center gap-2">
-                <Building className="w-5 h-5 text-blue-600" />
-                Professional Information
-              </h3>
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Years of Experience</label>
-                  <input type="number" name="years_experience" value={formData.years_experience} onChange={handleChange} min="0" className="input-field" placeholder="5" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Current Company</label>
-                  <input type="text" name="current_company" value={formData.current_company} onChange={handleChange} className="input-field" placeholder="Company Name" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Current Designation</label>
-                  <input type="text" name="current_designation" value={formData.current_designation} onChange={handleChange} className="input-field" placeholder="Senior AI Trainer" />
-                </div>
-              </div>
-            </div>
-
+            {/* Professional Details */}
             <div className="card p-6 lg:p-8">
               <h3 className="font-semibold text-slate-900 mb-4 flex items-center gap-2">
                 <Globe className="w-5 h-5 text-blue-600" />
-                Profiles & Links
+                Professional Details
               </h3>
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">LinkedIn URL</label>
-                  <input type="url" name="linkedin_url" value={formData.linkedin_url} onChange={handleChange} className="input-field" placeholder="https://linkedin.com/in/..." />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">GitHub Profile</label>
-                  <input type="url" name="github_url" value={formData.github_url} onChange={handleChange} className="input-field" placeholder="https://github.com/username" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Portfolio/Website URL</label>
-                  <input type="url" name="portfolio_url" value={formData.portfolio_url} onChange={handleChange} className="input-field" placeholder="https://yourportfolio.com" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Resume/CV URL</label>
-                  <input type="url" name="resume_url" value={formData.resume_url} onChange={handleChange} className="input-field" placeholder="Google Drive or Dropbox link" />
-                  <p className="text-xs text-slate-500 mt-1">Please share a public link to your resume (Google Drive, Dropbox, etc.)</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="card p-6 lg:p-8">
-              <h3 className="font-semibold text-slate-900 mb-4 flex items-center gap-2">
-                <FileText className="w-5 h-5 text-blue-600" />
-                Certifications
-              </h3>
-              <input type="text" name="certifications" value={formData.certifications} onChange={handleChange} className="input-field" placeholder="AWS, Azure, GCP (comma-separated)" />
-              <p className="text-xs text-slate-500 mt-1">Separate multiple certifications with commas</p>
-            </div>
-
-            <div className="card p-6 lg:p-8">
-              <h3 className="font-semibold text-slate-900 mb-4">Areas of Expertise</h3>
-              <div className="flex flex-wrap gap-2">
-                {expertiseOptions.map((expertise) => (
-                  <button
-                    key={expertise}
-                    type="button"
-                    onClick={() => toggleExpertise(expertise)}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                      formData.expertise_areas.includes(expertise) 
-                        ? 'bg-blue-600 text-white' 
-                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                    }`}
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    Total years of experience
+                  </label>
+                  <select
+                    name="years_experience"
+                    value={formData.years_experience}
+                    onChange={handleChange}
+                    className="input-field"
                   >
-                    {expertise}
-                  </button>
-                ))}
+                    <option value="">Select</option>
+                    {experienceOptions.map((opt) => (
+                      <option key={opt} value={opt}>
+                        {opt}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    Preferred Work Mode
+                  </label>
+                  <select
+                    name="preferred_work_mode"
+                    value={formData.preferred_work_mode}
+                    onChange={handleChange}
+                    className="input-field"
+                  >
+                    <option value="">Select</option>
+                    {workModes.map((mode) => (
+                      <option key={mode} value={mode}>
+                        {mode}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    LinkedIn Profile
+                  </label>
+                  <input
+                    type="url"
+                    name="linkedin_profile"
+                    value={formData.linkedin_profile}
+                    onChange={handleChange}
+                    className="input-field"
+                    placeholder="https://linkedin.com/in/..."
+                  />
+                </div>
               </div>
-              <p className="text-xs text-slate-500 mt-2">Select all that apply</p>
             </div>
 
+            {/* ----------------------------------------------------------------
+                ANCHOR-SPECIFIC SECTION – appears only when "Anchors" is selected
+                ---------------------------------------------------------------- */}
+            {isAnchor && (
+              <div className="card p-6 lg:p-8 border-2 border-blue-200 bg-blue-50/50">
+                <h3 className="font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                  <User className="w-5 h-5 text-blue-600" />
+                  Anchor Details
+                </h3>
+
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Which languages can you confidently host or present in?{' '}
+                    <span className="text-red-500">*</span>
+                  </label>
+                  <div className="flex flex-wrap gap-3">
+                    {languageOptions.map((lang) => (
+                      <label key={lang} className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={formData.anchor_languages.includes(lang)}
+                          onChange={() => toggleArrayField('anchor_languages', lang)}
+                          className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                        />
+                        {lang}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Have you hosted any of the following? <span className="text-red-500">*</span>
+                  </label>
+                  <div className="flex flex-wrap gap-3">
+                    {hostingOptions.map((event) => (
+                      <label key={event} className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={formData.anchor_hosted.includes(event)}
+                          onChange={() => toggleArrayField('anchor_hosted', event)}
+                          className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                        />
+                        {event}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Are you comfortable speaking in front of a camera?{' '}
+                    <span className="text-red-500">*</span>
+                  </label>
+                  <div className="flex gap-4">
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name="anchor_comfortable"
+                        value="Yes"
+                        checked={formData.anchor_comfortable === 'Yes'}
+                        onChange={handleChange}
+                        className="border-slate-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      Yes
+                    </label>
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name="anchor_comfortable"
+                        value="No"
+                        checked={formData.anchor_comfortable === 'No'}
+                        onChange={handleChange}
+                        className="border-slate-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      No
+                    </label>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Resume Upload */}
             <div className="card p-6 lg:p-8">
               <h3 className="font-semibold text-slate-900 mb-4 flex items-center gap-2">
                 <FileText className="w-5 h-5 text-blue-600" />
-                Cover Letter
+                Resume / CV
               </h3>
-              <textarea 
-                name="cover_letter" 
-                value={formData.cover_letter} 
-                onChange={handleChange} 
-                rows={6} 
-                className="input-field resize-none" 
-                placeholder="Tell us about your training philosophy, experience, and why you want to join Brainovision..." 
-              />
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Upload your Resume (link to Google Drive, Dropbox, etc.)
+                </label>
+                <input
+                  type="url"
+                  name="resume_url"
+                  value={formData.resume_url}
+                  onChange={handleChange}
+                  className="input-field"
+                  placeholder="https://drive.google.com/file/d/..."
+                />
+                <p className="text-xs text-slate-500 mt-1">
+                  Please share a public link to your resume (PDF or document). Max 10 MB.
+                </p>
+              </div>
+            </div>
+
+            {/* Declaration */}
+            <div className="card p-6 lg:p-8">
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  name="declaration"
+                  checked={formData.declaration}
+                  onChange={handleChange}
+                  className="mt-1 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                  required
+                />
+                <span className="text-sm text-slate-700">
+                  I hereby declare that the information provided above is true and accurate to the best of my knowledge.
+                  <span className="text-red-500"> *</span>
+                </span>
+              </label>
             </div>
 
             {error && (
@@ -359,13 +515,19 @@ export function ApplyPage() {
                 {error}
               </div>
             )}
-            
+
             <div className="flex justify-end">
               <button type="submit" disabled={loading} className="btn-primary flex items-center gap-2">
                 {loading ? (
-                  <><Loader2 className="w-5 h-5 animate-spin" />Submitting...</>
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Submitting...
+                  </>
                 ) : (
-                  <><Send className="w-5 h-5" />Submit Application</>
+                  <>
+                    <Send className="w-5 h-5" />
+                    Submit Application
+                  </>
                 )}
               </button>
             </div>
