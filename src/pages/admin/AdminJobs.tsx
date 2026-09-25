@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Plus, Edit, Trash2, ToggleLeft, ToggleRight, Search } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { DEFAULT_JOBS } from '../../data/defaultJobs';
 import type { Job } from '../../types/database';
 
 export function AdminJobs() {
@@ -12,10 +13,19 @@ export function AdminJobs() {
   useEffect(() => { fetchJobs(); }, []);
 
   const fetchJobs = async () => {
-    const { data } = await supabase.from('jobs').select('*').order('created_at', { ascending: false });
-    if (data) setJobs(data);
+    try {
+      const { data } = await supabase.from('jobs').select('*').order('created_at', { ascending: false });
+      if (data && data.length > 0) {
+        setJobs(data);
+      } else {
+        setJobs(DEFAULT_JOBS as any);
+      }
+    } catch {
+      setJobs(DEFAULT_JOBS as any);
+    }
     setLoading(false);
   };
+
 
   const toggleJobStatus = async (job: Job) => {
     const { error } = await supabase.from('jobs').update({ is_active: !job.is_active }).eq('id', job.id);

@@ -22,11 +22,15 @@ export function ContactPage() {
 
   return (
     <main className="pt-20 lg:pt-24 min-h-screen bg-slate-50">
-      <section className="bg-gradient-to-r from-slate-900 to-slate-800 py-16 lg:py-24">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="bg-gradient-to-r from-blue-900 via-blue-800 to-indigo-900 py-16 lg:py-24 text-white relative overflow-hidden">
+        <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="text-center">
-            <h1 className="text-3xl lg:text-5xl font-bold text-white mb-4">Contact HR</h1>
-            <p className="text-slate-300 text-lg max-w-2xl mx-auto">Have questions about opportunities at Brainovision? Our HR team is here to help.</p>
+            <span className="inline-block text-xs font-bold uppercase tracking-wider text-blue-200 bg-blue-500/20 border border-blue-400/30 px-3 py-1 rounded-full mb-3">
+              Brainovision Talent Acquisition
+            </span>
+            <h1 className="text-3xl lg:text-5xl font-extrabold text-white mb-4">Contact HR & Recruitment</h1>
+            <p className="text-blue-100/90 text-lg max-w-2xl mx-auto">Have questions about our campus drives, assessments, or open engineering roles? Our team is here to help.</p>
           </motion.div>
         </div>
       </section>
@@ -36,20 +40,20 @@ export function ContactPage() {
           <div className="grid lg:grid-cols-2 gap-12">
             <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }}>
               <h2 className="text-2xl font-bold text-slate-900 mb-6">Get in Touch</h2>
-              <p className="text-slate-600 mb-8">Reach out to our HR team for any queries regarding careers, applications, or the hiring process. We typically respond within 24 business hours.</p>
+              <p className="text-slate-600 mb-8">Reach out to our Talent Acquisition team for inquiries regarding campus partnerships, candidate status, or role requirements.</p>
 
               <div className="space-y-6">
                 <div className="flex items-start gap-4">
                   <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0"><Mail className="w-6 h-6 text-blue-600" /></div>
-                  <div><h3 className="font-semibold text-slate-900 mb-1">Email</h3><a href="mailto:hr@brainovision.com" className="text-blue-600 hover:text-blue-700">hr@brainovision.com</a></div>
+                  <div><h3 className="font-semibold text-slate-900 mb-1">Email</h3><a href="mailto:hiring@brainovision.in" className="text-blue-600 hover:text-blue-700 font-medium">hiring@brainovision.in</a></div>
                 </div>
                 <div className="flex items-start gap-4">
                   <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0"><Phone className="w-6 h-6 text-blue-600" /></div>
-                  <div><h3 className="font-semibold text-slate-900 mb-1">Phone</h3><a href="tel:+91-9876543210" className="text-blue-600 hover:text-blue-700">+91 98765 43210</a></div>
+                  <div><h3 className="font-semibold text-slate-900 mb-1">Phone</h3><a href="tel:+914049512345" className="text-blue-600 hover:text-blue-700 font-medium">+91 (040) 4951-2345</a></div>
                 </div>
                 <div className="flex items-start gap-4">
                   <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0"><MapPin className="w-6 h-6 text-blue-600" /></div>
-                  <div><h3 className="font-semibold text-slate-900 mb-1">Address</h3><p className="text-slate-600">Brainovision Technologies Pvt. Ltd.<br />HITEC City, Madhapur<br />Hyderabad, Telangana 500081</p></div>
+                  <div><h3 className="font-semibold text-slate-900 mb-1">Headquarters</h3><p className="text-slate-600">Brainovision Solutions India Pvt. Ltd.<br />HITEC City, Madhapur<br />Hyderabad, Telangana 500081</p></div>
                 </div>
                 <div className="flex items-start gap-4">
                   <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0"><Clock className="w-6 h-6 text-blue-600" /></div>

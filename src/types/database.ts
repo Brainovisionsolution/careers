@@ -58,6 +58,7 @@ export interface Application {
   portfolio_url: string | null;
 
   resume_url: string | null;
+  demo_video_url?: string | null;
 
   certifications: string[];
 

@@ -23,11 +23,15 @@ const stats = [{ value: '150+', label: 'Team Members' }, { value: '12+', label: 
 export function LifePage() {
   return (
     <main className="pt-20 lg:pt-24 min-h-screen bg-slate-50">
-      <section className="bg-gradient-to-r from-slate-900 to-slate-800 py-16 lg:py-24">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="bg-gradient-to-r from-blue-900 via-blue-800 to-indigo-900 py-16 lg:py-24 text-white relative overflow-hidden">
+        <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="text-center">
-            <h1 className="text-3xl lg:text-5xl font-bold text-white mb-4">Life at Brainovision</h1>
-            <p className="text-slate-300 text-lg max-w-2xl mx-auto">More than just a workplace - a community of innovators, educators, and lifelong learners</p>
+            <span className="inline-block text-xs font-bold uppercase tracking-wider text-blue-200 bg-blue-500/20 border border-blue-400/30 px-3 py-1 rounded-full mb-3">
+              Brainovision Culture & Team
+            </span>
+            <h1 className="text-3xl lg:text-5xl font-extrabold text-white mb-4">Life at Brainovision</h1>
+            <p className="text-blue-100/90 text-lg max-w-2xl mx-auto">More than just a workplace — a community of innovators, educators, and technology leaders</p>
           </motion.div>
         </div>
       </section>

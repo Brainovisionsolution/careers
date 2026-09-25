@@ -16,10 +16,48 @@ export function AdminCandidates() {
   useEffect(() => { fetchApplications(); }, []);
 
   const fetchApplications = async () => {
-    const { data } = await supabase.from('applications').select('*, job:jobs(title, category)').order('applied_at', { ascending: false });
-    if (data) setApplications(data);
+    try {
+      const { data } = await supabase.from('applications').select('*, job:jobs(title, category)').order('applied_at', { ascending: false });
+      if (data && data.length > 0) {
+        setApplications(data);
+        setLoading(false);
+        return;
+      }
+    } catch {
+      // Fall through to backend candidate store
+    }
+
+    try {
+      const res = await (await import('../../services/api')).adminService.getCandidates();
+      if (res && res.success && Array.isArray(res.candidates)) {
+        const mapped: Application[] = res.candidates.map((c: any) => ({
+          id: String(c.id || c.candidate_id),
+          job_id: 'job-1',
+          full_name: c.name,
+          email: c.email,
+          phone: c.phone || '9849012345',
+          experience_years: 0,
+          current_company: c.college,
+          current_ctc: 0,
+          expected_ctc: 0,
+          notice_period_days: 0,
+          resume_url: '',
+          status: (c.status?.toLowerCase() === 'cleared' ? 'offered' : c.status?.toLowerCase() === 'not_qualified' ? 'rejected' : 'screening') as any,
+          rating: c.score ? Math.round((c.score / 40) * 5) : 3,
+          applied_at: c.started_at || new Date().toISOString(),
+          job: {
+            title: c.position || 'Graduate Engineer Trainee 2026',
+            category: 'Campus Technical',
+          } as any,
+        }));
+        setApplications(mapped);
+      }
+    } catch {
+      // Keep empty if both fail
+    }
     setLoading(false);
   };
+
 
   const updateStatus = async (appId: string, newStatus: string) => {
     const { error } = await supabase.from('applications').update({ status: newStatus }).eq('id', appId);

@@ -7,16 +7,18 @@ import { User, Briefcase, Globe, FileText, Send, CheckCircle, Loader2 } from 'lu
 // 1. Job list (matches Google Form dropdown)
 // ------------------------------------------------------------
 const jobs = [
+  { id: 'bv-get-2026', title: 'Graduate Engineering Trainee (GET 2026) - AI & Full Stack' },
+  { id: 'bv-ai-trainer-lead', title: 'Lead Technical Trainer (Agentic AI & Quantum Computing)' },
+  { id: 'bv-aws-devops-lead', title: 'Senior Cloud Solutions Architect & AWS DevOps Mentor' },
+  { id: 'bv-fullstack-dev', title: 'Full Stack Engineer (React, Node.js, WebSockets)' },
+  { id: 'bv-campus-hr', title: 'Campus Talent Acquisition Specialist & HR Coordinator' },
+  { id: 'bv-ui-ux-designer', title: 'UI/UX Product Designer (Design Systems)' },
   { id: 'digital-marketing-ai-trainer', title: 'Digital Marketing with AI Trainer' },
   { id: 'sales-marketing-executive', title: 'Sales & Marketing Executive' },
   { id: 'technical-training-counselor', title: 'Technical Training Counselor' },
   { id: 'business-development-executive', title: 'Business Development Executive (BDE)' },
-  { id: 'mentor', title: 'Mentor' },
-  { id: 'script-writers', title: 'Script writers' },
-  { id: 'prompt-engineer', title: 'Prompt engineer' },
-  { id: 'video-editor', title: 'Video Editor' },
-  { id: 'videographer', title: 'Videographer' },
-  { id: 'anchors', title: 'Anchors' },               // <-- Anchor role
+  { id: 'prompt-engineer', title: 'Prompt Engineer' },
+  { id: 'anchors', title: 'Anchors' },
 ];
 
 const workModes = ['Work From Office', 'Remote', 'Hybrid', 'Free Launcher', 'Part Time', 'Other'];
@@ -224,11 +226,15 @@ export function ApplyPage() {
   // ------------------------------------------------------------
   return (
     <main className="pt-20 lg:pt-24 min-h-screen bg-slate-50">
-      <section className="bg-gradient-to-r from-slate-900 to-slate-800 py-16 lg:py-20">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="bg-gradient-to-r from-blue-900 via-blue-800 to-indigo-900 py-16 lg:py-20 text-white relative overflow-hidden">
+        <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]" />
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-            <h1 className="text-3xl lg:text-4xl font-bold text-white mb-4">Apply Now</h1>
-            <p className="text-slate-300 text-lg">Join Brainovision Solutions India Pvt. Ltd.</p>
+            <span className="inline-block text-xs font-bold uppercase tracking-wider text-blue-200 bg-blue-500/20 border border-blue-400/30 px-3 py-1 rounded-full mb-3">
+              Official Candidate Registration
+            </span>
+            <h1 className="text-3xl lg:text-4xl font-extrabold text-white mb-2">Apply for Opportunities</h1>
+            <p className="text-blue-100/90 text-base sm:text-lg">Brainovision Solutions India Pvt. Ltd. — Campus & Corporate Recruitment</p>
           </motion.div>
         </div>
       </section>

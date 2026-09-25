@@ -5,8 +5,9 @@ import { Menu, X } from 'lucide-react';
 
 const navItems = [
   { name: 'Home', path: '/' },
-  { name: 'Open Roles', path: '/careers' },
-  { name: 'Life at Brainovision', path: '/life' },
+  { name: 'Opportunities', path: '/careers' },
+  { name: 'Assessment', path: '/assessment' },
+  { name: 'About Brainovision', path: '/life' },
   { name: 'Hiring Process', path: '/process' },
   { name: 'Contact', path: '/contact' },
 ];
@@ -38,14 +39,14 @@ export function Navbar() {
             />
           </Link>
 
-          <div className="hidden lg:flex items-center gap-8">
+          <div className="hidden lg:flex items-center gap-7">
             {navItems.map((item) => (
               <Link 
                 key={item.path} 
                 to={item.path} 
                 className={`text-sm font-medium transition-colors duration-200 ${
                   location.pathname === item.path 
-                    ? 'text-blue-600' 
+                    ? 'text-blue-600 font-semibold' 
                     : 'text-slate-600 hover:text-blue-600'
                 }`}
               >
@@ -54,10 +55,16 @@ export function Navbar() {
             ))}
           </div>
 
-          <div className="hidden lg:flex items-center gap-4">
+          <div className="hidden lg:flex items-center gap-3">
+            <Link 
+              to="/assessment" 
+              className="px-4 py-2 bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 hover:border-blue-300 text-xs font-bold rounded-lg transition-all shadow-sm flex items-center gap-1.5"
+            >
+              <span>Assessment Portal</span>
+            </Link>
             <Link 
               to="/apply" 
-              className="px-6 py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition-all shadow-md hover:shadow-lg"
+              className="px-5 py-2 bg-blue-600 text-white text-xs font-bold rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-all shadow-md hover:shadow-lg"
             >
               Apply Now
             </Link>
@@ -95,8 +102,14 @@ export function Navbar() {
                 </Link>
               ))}
               <Link 
+                to="/assessment" 
+                className="block w-full py-2.5 mt-4 bg-blue-50 text-blue-700 border border-blue-200 text-center font-bold text-xs rounded-lg hover:bg-blue-100"
+              >
+                Candidate Assessment Portal
+              </Link>
+              <Link 
                 to="/apply" 
-                className="block w-full py-3 mt-4 bg-blue-600 text-white text-center font-semibold rounded-lg"
+                className="block w-full py-2.5 mt-2 bg-blue-600 text-white text-center font-bold text-xs rounded-lg hover:bg-blue-700"
               >
                 Apply Now
               </Link>

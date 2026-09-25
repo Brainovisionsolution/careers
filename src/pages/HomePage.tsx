@@ -1,9 +1,9 @@
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Sparkles, Cpu, Code, Cloud, Lightbulb, TrendingUp, Globe, BookOpen, DollarSign, Home, Award, Mic, MapPin, Briefcase, Clock, Quote } from 'lucide-react';
+import { ArrowRight, Sparkles, Cpu, Code, Cloud, Lightbulb, TrendingUp, Globe, BookOpen, DollarSign, Home, Award, Mic, MapPin, Briefcase, Clock, ShieldCheck } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import type { Job, Testimonial, FAQ } from '../types/database';
+import type { Job, FAQ } from '../types/database';
 
 const positions = [
   { title: 'Agentic AI & Quantum Computing', count: 10, icon: Cpu, color: 'from-blue-500 to-cyan-500', description: 'Lead cutting-edge training in autonomous AI systems and quantum algorithms' },
@@ -43,20 +43,67 @@ const steps = [
   { title: 'Offer Letter', icon: ArrowRight, description: 'Welcome aboard' },
 ];
 
+import { defaultJobs } from '../data/defaultJobs';
+
+const defaultFaqs: FAQ[] = [
+  {
+    id: 'faq-1',
+    question: 'How does the Brainovision Candidate Assessment process work?',
+    answer: 'Once you apply or receive an invitation for a campus drive, you log into our secure Candidate Assessment Portal using your unique Candidate ID. You complete an online proctored test covering Quantitative Aptitude, Logical Reasoning, Verbal Ability, and Technical core concepts.',
+    display_order: 1,
+    is_active: true,
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: 'faq-2',
+    question: 'What are the technical and proctoring requirements for the assessment?',
+    answer: 'You will need a desktop or laptop running Google Chrome or Edge with an active webcam, microphone, and stable internet connection. The system runs real-time automated proctoring including tab-switch detection, face presence checks, and full-screen enforcement.',
+    display_order: 2,
+    is_active: true,
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: 'faq-3',
+    question: 'When will assessment results and interview shortlists be declared?',
+    answer: 'Scores and qualification status are computed immediately upon test submission. Eligible candidates receive automated email confirmation and an invitation to schedule technical and HR interview rounds within 24 to 48 hours.',
+    display_order: 3,
+    is_active: true,
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: 'faq-4',
+    question: 'Are positions available for fresh graduates (2025 / 2026 batch)?',
+    answer: 'Yes! Our Graduate Engineering Trainee (GET) programs are specifically tailored for final-year students and fresh graduates in Computer Science, IT, and related engineering disciplines.',
+    display_order: 4,
+    is_active: true,
+    created_at: new Date().toISOString(),
+  },
+];
+
 export function HomePage() {
   const [jobs, setJobs] = useState<Job[]>([]);
-  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [faqs, setFaqs] = useState<FAQ[]>([]);
   const [openFaq, setOpenFaq] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
-      const { data: jobsData } = await supabase.from('jobs').select('*').eq('is_active', true).limit(6);
-      const { data: testimonialsData } = await supabase.from('testimonials').select('*').eq('is_active', true);
-      const { data: faqsData } = await supabase.from('faqs').select('*').eq('is_active', true).order('display_order');
-      if (jobsData) setJobs(jobsData);
-      if (testimonialsData) setTestimonials(testimonialsData);
-      if (faqsData) setFaqs(faqsData);
+      try {
+        const { data: jobsData } = await supabase.from('jobs').select('*').eq('is_active', true).limit(6);
+        const { data: faqsData } = await supabase.from('faqs').select('*').eq('is_active', true).order('display_order');
+        if (jobsData && jobsData.length > 0) {
+          setJobs(jobsData);
+        } else {
+          setJobs(defaultJobs.slice(0, 6));
+        }
+        if (faqsData && faqsData.length > 0) {
+          setFaqs(faqsData);
+        } else {
+          setFaqs(defaultFaqs);
+        }
+      } catch {
+        setJobs(defaultJobs.slice(0, 6));
+        setFaqs(defaultFaqs);
+      }
     };
     fetchData();
   }, []);
@@ -64,10 +111,10 @@ export function HomePage() {
   return (
     <main className="overflow-x-hidden">
       {/* Hero Section */}
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-slate-50 via-blue-50 to-emerald-50 pt-20">
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-blue-50/80 via-white to-slate-50 pt-20">
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute -top-40 -right-40 w-96 h-96 bg-blue-400/10 rounded-full blur-3xl animate-float" />
-          <div className="absolute top-1/2 -left-40 w-80 h-80 bg-emerald-400/10 rounded-full blur-3xl animate-float animation-delay-200" />
+          <div className="absolute top-1/2 -left-40 w-80 h-80 bg-blue-600/10 rounded-full blur-3xl animate-float animation-delay-200" />
         </div>
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-20 lg:py-32">
           <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center">
@@ -81,19 +128,19 @@ export function HomePage() {
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.1 }}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-700 rounded-full text-sm font-medium mb-6"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-700 rounded-full text-sm font-semibold mb-6 border border-blue-200"
               >
                 <Sparkles className="w-4 h-4" />
-                <span>Expert Trainer Positions Available</span>
+                <span>Brainovision Solutions • Campus & Lateral Hiring 2026</span>
               </motion.div>
               <motion.h1
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
-                className="text-4xl sm:text-5xl lg:text-7xl font-bold text-slate-900 leading-tight mb-6 tracking-tight"
+                className="text-4xl sm:text-5xl lg:text-7xl font-extrabold text-slate-900 leading-tight mb-6 tracking-tight"
               >
                 Shape the Future of{' '}
-                <span className="gradient-text">Technology Education</span>
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">Enterprise AI</span> & Tech Education
               </motion.h1>
               <motion.p
                 initial={{ opacity: 0, y: 20 }}
@@ -101,7 +148,7 @@ export function HomePage() {
                 transition={{ delay: 0.3 }}
                 className="text-lg lg:text-xl text-slate-600 mb-8 max-w-xl mx-auto lg:mx-0 leading-relaxed"
               >
-                Join Brainovision's distinguished faculty of AI, Cloud, Quantum Computing, and Technology experts. Empower the next generation of innovators.
+                Join Brainovision's distinguished faculty of AI, Cloud, Quantum Computing, and Full-Stack Engineering experts. Build scalable software and empower the next generation of innovators.
               </motion.p>
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -109,11 +156,13 @@ export function HomePage() {
                 transition={{ delay: 0.4 }}
                 className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start"
               >
-                <Link to="/careers" className="btn-primary inline-flex items-center justify-center gap-2">
-                  Explore Opportunities <ArrowRight className="w-5 h-5" />
+                <Link to="/assessment" className="inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all">
+                  <ShieldCheck className="w-5 h-5 text-yellow-300" />
+                  <span>Candidate Assessment Portal</span>
                 </Link>
-                <Link to="/apply" className="btn-secondary inline-flex items-center justify-center">
-                  Submit Application
+                <Link to="/careers" className="inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-white text-blue-700 border-2 border-blue-200 hover:border-blue-600 hover:bg-blue-50 font-bold rounded-xl transition-all shadow-sm">
+                  <span>Explore Open Positions</span>
+                  <ArrowRight className="w-4 h-4" />
                 </Link>
               </motion.div>
               <motion.div
@@ -302,42 +351,57 @@ export function HomePage() {
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
               >
-                <Link to={`/careers/${job.id}`} className="block group">
-                  <div className="card p-6 h-full flex flex-col hover:border-blue-200 transition-all duration-300 bg-white rounded-2xl shadow-sm hover:shadow-md border border-slate-200">
-                    <div className="flex items-start justify-between mb-4">
-                      <div>
-                        <h3 className="font-semibold text-slate-900 text-lg group-hover:text-blue-600 transition-colors">
-                          {job.title}
-                        </h3>
-                        <p className="text-sm text-slate-500">{job.department}</p>
-                      </div>
-                      <span className="px-3 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded-full">
-                        {job.positions_available} Open
-                      </span>
+                <div className="p-6 h-full flex flex-col hover:border-blue-300 transition-all duration-300 bg-white rounded-2xl shadow-sm hover:shadow-md border border-blue-100 group">
+                  <div className="flex items-start justify-between gap-3 mb-3">
+                    <div>
+                      <h3 className="font-bold text-slate-900 text-lg group-hover:text-blue-600 transition-colors leading-snug">
+                        <Link to={`/careers/${job.id}`}>{job.title}</Link>
+                      </h3>
+                      <p className="text-xs font-medium text-slate-500 mt-1">{job.department}</p>
                     </div>
-                    <p className="text-slate-600 text-sm mb-4 line-clamp-2 leading-relaxed">
-                      {job.description}
-                    </p>
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      <span className="inline-flex items-center gap-1 text-xs text-slate-500 bg-slate-100 px-2 py-1 rounded">
-                        <Briefcase className="w-3 h-3" />
-                        {job.employment_type}
-                      </span>
-                      <span className="inline-flex items-center gap-1 text-xs text-slate-500 bg-slate-100 px-2 py-1 rounded">
-                        <Clock className="w-3 h-3" />
-                        {job.experience_min}-{job.experience_max} years
-                      </span>
-                      <span className="inline-flex items-center gap-1 text-xs text-slate-500 bg-slate-100 px-2 py-1 rounded">
-                        <MapPin className="w-3 h-3" />
-                        {job.location}
-                      </span>
-                    </div>
-                    <div className="mt-auto flex items-center text-blue-600 font-medium text-sm gap-2 group-hover:gap-3 transition-all">
-                      <span>View Details</span>
-                      <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                    </div>
+                    <span className="px-2.5 py-1 bg-blue-50 text-blue-700 border border-blue-200 text-xs font-bold rounded-full flex-shrink-0">
+                      {job.positions_available} Open
+                    </span>
                   </div>
-                </Link>
+                  <p className="text-slate-600 text-sm mb-4 line-clamp-2 leading-relaxed flex-1">
+                    {job.description}
+                  </p>
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    <span className="inline-flex items-center gap-1 text-xs text-slate-600 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-lg">
+                      <Briefcase className="w-3 h-3 text-blue-600" />
+                      <span className="capitalize">{job.employment_type}</span>
+                    </span>
+                    <span className="inline-flex items-center gap-1 text-xs text-slate-600 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-lg">
+                      <Clock className="w-3 h-3 text-blue-600" />
+                      <span>{job.experience_min}-{job.experience_max} yrs</span>
+                    </span>
+                    <span className="inline-flex items-center gap-1 text-xs text-slate-600 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-lg">
+                      <MapPin className="w-3 h-3 text-blue-600" />
+                      <span className="truncate max-w-[120px]">{job.location}</span>
+                    </span>
+                    {job.salary_min && job.salary_max && (
+                      <span className="inline-flex items-center gap-1 text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-lg font-semibold">
+                        <DollarSign className="w-3 h-3 text-emerald-600" />
+                        <span>{job.salary_min}-{job.salary_max} LPA</span>
+                      </span>
+                    )}
+                  </div>
+                  <div className="mt-auto pt-3 border-t border-slate-100 flex items-center justify-between">
+                    <Link
+                      to={`/apply?jobId=${job.id}`}
+                      className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-lg transition-colors shadow-sm"
+                    >
+                      Apply Now
+                    </Link>
+                    <Link
+                      to={`/careers/${job.id}`}
+                      className="flex items-center text-blue-600 hover:text-blue-800 font-bold text-xs gap-1.5 transition-all"
+                    >
+                      <span>Details</span>
+                      <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                    </Link>
+                  </div>
+                </div>
               </motion.div>
             ))}
           </div>

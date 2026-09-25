@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Users, Briefcase, Calendar, TrendingUp, Clock, CheckCircle, AlertCircle } from 'lucide-react';
+import { Users, Briefcase, Calendar, TrendingUp, Clock, AlertCircle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import type { Application, Interview } from '../../types/database';
 
