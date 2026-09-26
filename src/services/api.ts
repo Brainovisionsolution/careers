@@ -167,6 +167,20 @@ export const adminService = {
     }, 'admin');
   },
 
+  async togglePublish(isActive: boolean, assessmentId?: number | string) {
+    return request('/admin/assessment/publish', {
+      method: 'POST',
+      body: JSON.stringify({ isActive, assessmentId }),
+    }, 'admin');
+  },
+
+  async batchImportQuestions(questions: any[]) {
+    return request('/admin/questions/import', {
+      method: 'POST',
+      body: JSON.stringify({ questions }),
+    }, 'admin');
+  },
+
   async getCandidates(params: { status?: string; search?: string } = {}) {
 
     const query = new URLSearchParams();

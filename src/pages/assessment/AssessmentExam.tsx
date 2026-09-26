@@ -112,8 +112,22 @@ export function AssessmentExam() {
     setAnswers(current.answers || {});
     setMarkedForReview(current.markedForReview || []);
 
-    const loadedQuestions = getQuestions();
-    setQuestions(loadedQuestions);
+    // Load server-authoritative randomized question set based on active MySQL assessment
+    assessmentService.start().then((startRes) => {
+      if (startRes && startRes.success && Array.isArray(startRes.questions) && startRes.questions.length > 0) {
+        setQuestions(startRes.questions);
+        if (startRes.remainingSeconds) {
+          setTimeLeft(startRes.remainingSeconds);
+        }
+      } else {
+        const loadedQuestions = getQuestions();
+        setQuestions(loadedQuestions);
+      }
+    }).catch((err) => {
+      console.warn('Backend startAssessment notice, using store fallback:', err);
+      const loadedQuestions = getQuestions();
+      setQuestions(loadedQuestions);
+    });
 
     // Initialize Security Engine
     const sec = new SecurityEngine(current.candidateId, handleSecurityViolation);

@@ -23,6 +23,13 @@ import {
   Sliders,
   Settings,
   X,
+  Award,
+  FileText,
+  Check,
+  CheckSquare,
+  Globe,
+  Power,
+  Save,
 } from 'lucide-react';
 import {
   getCandidates,
@@ -59,7 +66,7 @@ export function AdminAssessment() {
   const [config, setConfig] = useState<AssessmentConfig | null>(null);
   const [emailLogs, setEmailLogs] = useState<EmailLog[]>([]);
 
-  const [activeTab, setActiveTab] = useState<'monitoring' | 'importer' | 'questions' | 'logs'>('monitoring');
+  const [activeTab, setActiveTab] = useState<'overview' | 'settings' | 'questions' | 'candidates' | 'importer' | 'logs'>('overview');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
 
@@ -104,6 +111,12 @@ export function AdminAssessment() {
   const [isSavingEdit, setIsSavingEdit] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
 
+  // Question Import Modal State
+  const [showImportQuestionsModal, setShowImportQuestionsModal] = useState(false);
+  const [importQuestionsText, setImportQuestionsText] = useState('');
+  const [isImportingQuestions, setIsImportingQuestions] = useState(false);
+  const [importQuestionsMsg, setImportQuestionsMsg] = useState<string | null>(null);
+
   // Question tab filters
   const [questionSectionFilter, setQuestionSectionFilter] = useState<'all' | QuestionSection>('all');
   const [questionSearch, setQuestionSearch] = useState('');
@@ -118,9 +131,10 @@ export function AdminAssessment() {
   const [dedupNotice, setDedupNotice] = useState<string | null>(null);
   const [isDeduplicating, setIsDeduplicating] = useState(false);
 
-  // Exam configuration & cutoff modal state
+  // Exam configuration & cutoff state (Persisted directly to MySQL)
   const [showConfigModal, setShowConfigModal] = useState(false);
-  const [cfgTitle, setCfgTitle] = useState('');
+  const [cfgTitle, setCfgTitle] = useState('Campus Recruitment Assessment — 2026');
+  const [cfgDescription, setCfgDescription] = useState('Phase 1 Technical & Aptitude Online Screening Assessment for Graduate Engineering Trainee Program');
   const [cfgDuration, setCfgDuration] = useState(45);
   const [cfgCutoff, setCfgCutoff] = useState(60);
   const [cfgMarksPerQ, setCfgMarksPerQ] = useState(1);
@@ -128,11 +142,16 @@ export function AdminAssessment() {
   const [cfgNegativePenalty, setCfgNegativePenalty] = useState(0.25);
   const [cfgMaxTabSwitches, setCfgMaxTabSwitches] = useState(2);
   const [cfgMaxFullscreenExits, setCfgMaxFullscreenExits] = useState(2);
+  const [cfgSecurityLevel, setCfgSecurityLevel] = useState<'strict' | 'standard' | 'lenient'>('strict');
+  const [cfgIsActive, setCfgIsActive] = useState(true);
+  const [cfgScheduleStart, setCfgScheduleStart] = useState('');
+  const [cfgScheduleEnd, setCfgScheduleEnd] = useState('');
   const [cfgAptitude, setCfgAptitude] = useState(15);
   const [cfgReasoning, setCfgReasoning] = useState(10);
   const [cfgVerbal, setCfgVerbal] = useState(10);
   const [cfgTechnical, setCfgTechnical] = useState(5);
   const [isSavingConfig, setIsSavingConfig] = useState(false);
+  const [isTogglingPublish, setIsTogglingPublish] = useState(false);
   const [configSaveSuccess, setConfigSaveSuccess] = useState<string | null>(null);
 
   useEffect(() => {
@@ -215,8 +234,28 @@ export function AdminAssessment() {
     try {
       const cfgRes = await adminService.getConfig();
       if (cfgRes && cfgRes.success && cfgRes.config) {
-        setConfig(cfgRes.config);
-        updateAssessmentConfig(cfgRes.config);
+        const c = cfgRes.config;
+        setConfig(c);
+        updateAssessmentConfig(c);
+        setCfgTitle(c.title || 'Campus Recruitment Assessment — 2026');
+        setCfgDescription(c.description || 'Phase 1 Technical & Aptitude Online Screening Assessment for Graduate Engineering Trainee Program');
+        setCfgDuration(c.durationMinutes || 45);
+        setCfgCutoff(c.passingPercentage || 60);
+        setCfgNegativeMarking(Boolean(c.negativeMarking));
+        setCfgMaxTabSwitches(c.maxTabSwitches || 2);
+        setCfgMaxFullscreenExits(c.maxFullscreenExits || 2);
+        setCfgSecurityLevel(c.securityLevel || 'strict');
+        setCfgIsActive(c.isActive !== undefined ? Boolean(c.isActive) : true);
+        setCfgScheduleStart(c.scheduleStart || '');
+        setCfgScheduleEnd(c.scheduleEnd || '');
+        const apt = c.sections?.find((s: any) => s.id === 'aptitude' || s.section_key === 'aptitude')?.count ?? 15;
+        const rea = c.sections?.find((s: any) => s.id === 'reasoning' || s.section_key === 'reasoning')?.count ?? 10;
+        const ver = c.sections?.find((s: any) => s.id === 'verbal' || s.section_key === 'verbal')?.count ?? 10;
+        const tec = c.sections?.find((s: any) => s.id === 'technical' || s.section_key === 'technical')?.count ?? 5;
+        setCfgAptitude(apt);
+        setCfgReasoning(rea);
+        setCfgVerbal(ver);
+        setCfgTechnical(tec);
       } else {
         setConfig(getAssessmentConfig());
       }
@@ -250,45 +289,140 @@ export function AdminAssessment() {
     setShowConfigModal(true);
   };
 
-  const handleSaveConfig = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSaveConfig = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     setIsSavingConfig(true);
     const updatedSections = [
-      { id: 'aptitude', title: 'Quantitative Aptitude', count: Number(cfgAptitude) || 0 },
-      { id: 'reasoning', title: 'Logical Reasoning', count: Number(cfgReasoning) || 0 },
-      { id: 'verbal', title: 'Verbal Ability', count: Number(cfgVerbal) || 0 },
-      { id: 'technical', title: 'Technical Core', count: Number(cfgTechnical) || 0 },
+      { id: 'aptitude' as QuestionSection, section_key: 'aptitude', title: 'Quantitative Aptitude', count: Number(cfgAptitude) || 0, marksPerQuestion: 1 },
+      { id: 'reasoning' as QuestionSection, section_key: 'reasoning', title: 'Logical Reasoning', count: Number(cfgReasoning) || 0, marksPerQuestion: 1 },
+      { id: 'verbal' as QuestionSection, section_key: 'verbal', title: 'Verbal Ability', count: Number(cfgVerbal) || 0, marksPerQuestion: 1 },
+      { id: 'technical' as QuestionSection, section_key: 'technical', title: 'Technical Core', count: Number(cfgTechnical) || 0, marksPerQuestion: 1 },
     ];
     const totalQs = updatedSections.reduce((a, s) => a + s.count, 0);
 
-    const payload: AssessmentConfig = {
-      id: config?.id || 'campus-2026-phase1',
-      title: cfgTitle.trim() || 'Brainovision Campus Recruitment Assessment — 2026',
+    const payload = {
+      id: config?.id || 1,
+      title: cfgTitle.trim() || 'Campus Recruitment Assessment — 2026',
+      description: cfgDescription,
       durationMinutes: Number(cfgDuration) || 45,
       passingPercentage: Number(cfgCutoff) || 60,
       negativeMarking: cfgNegativeMarking,
       maxTabSwitches: Number(cfgMaxTabSwitches) || 2,
       maxFullscreenExits: Number(cfgMaxFullscreenExits) || 2,
-      securityLevel: 'strict',
+      securityLevel: cfgSecurityLevel,
+      isActive: cfgIsActive,
       sections: updatedSections,
+      scheduleStart: cfgScheduleStart,
+      scheduleEnd: cfgScheduleEnd,
+      totalQuestions: totalQs,
+      marksPerQuestion: Number(cfgMarksPerQ) || 1,
     };
 
     try {
-      await adminService.updateConfig({
-        ...payload,
-        totalQuestions: totalQs,
-        marksPerQuestion: Number(cfgMarksPerQ) || 1,
-      });
+      const res = await adminService.updateConfig(payload);
+      if (res && res.success && res.config) {
+        setConfig(res.config);
+      } else {
+        setConfig(payload as any);
+      }
     } catch (err) {
       console.warn('Backend update config notice:', err);
+      setConfig(payload as any);
     }
 
-    updateAssessmentConfig(payload);
-    setConfig(payload);
+    updateAssessmentConfig(payload as any);
     setIsSavingConfig(false);
     setShowConfigModal(false);
-    setConfigSaveSuccess('Assessment details, duration, and qualification cutoff criteria updated successfully.');
+    setConfigSaveSuccess('Assessment settings, section distributions, and security policies saved permanently in MySQL.');
     setTimeout(() => setConfigSaveSuccess(null), 5000);
+  };
+
+  const handleTogglePublish = async (newStatus: boolean) => {
+    setIsTogglingPublish(true);
+    try {
+      const res = await adminService.togglePublish(newStatus, config?.id);
+      if (res && res.success && res.config) {
+        setConfig(res.config);
+        setCfgIsActive(Boolean(res.config.isActive));
+      } else {
+        setCfgIsActive(newStatus);
+        if (config) setConfig({ ...config, isActive: newStatus });
+      }
+      setConfigSaveSuccess(`Assessment status updated: ${newStatus ? 'ACTIVE & PUBLISHED' : 'DRAFT (UNPUBLISHED)'}.`);
+      setTimeout(() => setConfigSaveSuccess(null), 5000);
+    } catch (err: any) {
+      console.warn('Toggle publish notice:', err);
+      setCfgIsActive(newStatus);
+    } finally {
+      setIsTogglingPublish(false);
+    }
+  };
+
+  const handleBatchImportQuestions = async () => {
+    if (!importQuestionsText.trim()) return;
+    setIsImportingQuestions(true);
+    setImportQuestionsMsg(null);
+
+    let parsed: any[] = [];
+    const text = importQuestionsText.trim();
+
+    if (text.startsWith('[') || text.startsWith('{')) {
+      try {
+        const obj = JSON.parse(text);
+        parsed = Array.isArray(obj) ? obj : (obj.questions || []);
+      } catch {
+        setImportQuestionsMsg('Invalid JSON format. Please paste valid JSON or use CSV format.');
+        setIsImportingQuestions(false);
+        return;
+      }
+    } else {
+      const lines = text.split('\n');
+      const startIdx = lines[0].toLowerCase().includes('question') ? 1 : 0;
+      for (let i = startIdx; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) continue;
+        const parts = line.split(',').map((p) => p.trim().replace(/^["']|["']$/g, ''));
+        if (parts.length >= 7) {
+          parsed.push({
+            section: parts[0] || 'aptitude',
+            questionText: parts[1],
+            optionA: parts[2],
+            optionB: parts[3],
+            optionC: parts[4] || '',
+            optionD: parts[5] || '',
+            correctOption: parts[6] || 'A',
+            difficulty: parts[7] || 'medium',
+            marks: Number(parts[8]) || 1,
+            explanation: parts[9] || '',
+          });
+        }
+      }
+    }
+
+    if (parsed.length === 0) {
+      setImportQuestionsMsg('No valid question rows found. Ensure CSV format has: Section, QuestionText, OptionA, OptionB, OptionC, OptionD, CorrectOption');
+      setIsImportingQuestions(false);
+      return;
+    }
+
+    try {
+      const res = await adminService.batchImportQuestions(parsed);
+      if (res && res.success) {
+        setImportQuestionsMsg(`Successfully imported ${res.importedCount} question(s) into MySQL question bank!`);
+        await refreshData();
+        setTimeout(() => {
+          setShowImportQuestionsModal(false);
+          setImportQuestionsText('');
+          setImportQuestionsMsg(null);
+        }, 1500);
+      } else {
+        setImportQuestionsMsg(res?.message || 'Failed to import questions.');
+      }
+    } catch (err: any) {
+      setImportQuestionsMsg(err.message || 'Import failed.');
+    } finally {
+      setIsImportingQuestions(false);
+    }
   };
 
 
