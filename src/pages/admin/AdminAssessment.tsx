@@ -30,6 +30,11 @@ import {
   Globe,
   Power,
   Save,
+  Users,
+  BarChart3,
+  Clock,
+  Layers,
+  Activity,
 } from 'lucide-react';
 import {
   getCandidates,
@@ -1048,34 +1053,724 @@ export function AdminAssessment() {
       </div>
 
       {/* 2. TAB CONTROLS */}
-      <div className="flex border-b border-slate-200 gap-6">
+      <div className="flex border-b border-slate-200 gap-2 sm:gap-4 overflow-x-auto pb-1">
         {[
-          { id: 'monitoring', label: 'Live Candidates & Results', count: candidates.length },
-          { id: 'importer', label: 'Import Student Data & Credentials', count: null },
-          { id: 'questions', label: 'Question Bank & Config', count: questions.length },
-          { id: 'logs', label: 'Official Email Logs', count: emailLogs.length },
-        ].map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id as any)}
-            className={`pb-4 text-sm font-bold border-b-2 flex items-center gap-2 transition-colors ${
-              activeTab === tab.id
-                ? 'border-blue-600 text-blue-600'
-                : 'border-transparent text-slate-500 hover:text-slate-800'
-            }`}
-          >
-            <span>{tab.label}</span>
-            {tab.count !== null && (
-              <span className={`text-xs px-2 py-0.5 rounded-full ${activeTab === tab.id ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-600'}`}>
-                {tab.count}
-              </span>
-            )}
-          </button>
-        ))}
+          { id: 'overview', label: 'Overview & Status', icon: BarChart3, count: null },
+          { id: 'settings', label: 'Assessment Settings (MySQL)', icon: Sliders, count: null },
+          { id: 'questions', label: 'Question Bank', icon: HelpCircle, count: questions.length },
+          { id: 'candidates', label: 'Live Candidates & Results', icon: Users, count: candidates.length },
+          { id: 'importer', label: 'Import Candidates', icon: Upload, count: null },
+          { id: 'logs', label: 'Email Audit Logs', icon: Mail, count: emailLogs.length },
+        ].map((tab) => {
+          const Icon = tab.icon;
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as any)}
+              className={`pb-3 text-xs sm:text-sm font-bold border-b-2 flex items-center gap-2 transition-all whitespace-nowrap px-1 ${
+                isActive
+                  ? 'border-blue-600 text-blue-600'
+                  : 'border-transparent text-slate-500 hover:text-slate-800'
+              }`}
+            >
+              <Icon className={`w-4 h-4 ${isActive ? 'text-blue-600' : 'text-slate-400'}`} />
+              <span>{tab.label}</span>
+              {tab.count !== null && (
+                <span className={`text-[11px] px-2 py-0.5 rounded-full font-mono ${isActive ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-600'}`}>
+                  {tab.count}
+                </span>
+              )}
+            </button>
+          );
+        })}
       </div>
 
-      {/* 3. TAB 1: LIVE CANDIDATE MONITORING & RESULTS */}
-      {activeTab === 'monitoring' && (
+      {/* TAB: OVERVIEW & STATUS */}
+      {activeTab === 'overview' && (
+        <div className="space-y-6">
+          {/* Active Assessment Hero Status Banner */}
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-7 relative overflow-hidden">
+            <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+              <div className="space-y-2 max-w-2xl">
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 bg-slate-100 px-2.5 py-1 rounded-md">
+                    MySQL Source of Truth
+                  </span>
+                  <span className={`text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1.5 ${
+                    cfgIsActive
+                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                      : 'bg-amber-50 text-amber-700 border border-amber-200'
+                  }`}>
+                    <span className={`w-2 h-2 rounded-full ${cfgIsActive ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`} />
+                    <span>{cfgIsActive ? 'PUBLISHED & ACTIVE FOR CANDIDATES' : 'DRAFT / UNPUBLISHED'}</span>
+                  </span>
+                  <span className="text-xs font-bold px-2.5 py-1 rounded-md bg-blue-50 text-blue-700 border border-blue-200">
+                    Cutoff: {cfgCutoff}% Passing Mark
+                  </span>
+                </div>
+
+                <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
+                  {cfgTitle}
+                </h2>
+                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                  {cfgDescription}
+                </p>
+
+                <div className="pt-2 flex flex-wrap items-center gap-4 text-xs font-medium text-slate-600">
+                  <span className="flex items-center gap-1.5">
+                    <Clock className="w-3.5 h-3.5 text-blue-600" />
+                    <strong>{cfgDuration} Minutes</strong> Duration
+                  </span>
+                  <span>•</span>
+                  <span className="flex items-center gap-1.5">
+                    <Layers className="w-3.5 h-3.5 text-blue-600" />
+                    <strong>{(Number(cfgAptitude) || 0) + (Number(cfgReasoning) || 0) + (Number(cfgVerbal) || 0) + (Number(cfgTechnical) || 0)} Questions</strong> Total
+                  </span>
+                  <span>•</span>
+                  <span className="flex items-center gap-1.5">
+                    <Award className="w-3.5 h-3.5 text-emerald-600" />
+                    Passing: <strong>{((((Number(cfgAptitude) || 0) + (Number(cfgReasoning) || 0) + (Number(cfgVerbal) || 0) + (Number(cfgTechnical) || 0)) * (Number(cfgMarksPerQ) || 1) * (Number(cfgCutoff) || 60)) / 100).toFixed(1)} / {((Number(cfgAptitude) || 0) + (Number(cfgReasoning) || 0) + (Number(cfgVerbal) || 0) + (Number(cfgTechnical) || 0)) * (Number(cfgMarksPerQ) || 1)} Marks</strong>
+                  </span>
+                  <span>•</span>
+                  <span className="flex items-center gap-1.5">
+                    <ShieldAlert className="w-3.5 h-3.5 text-purple-600" />
+                    Security: <strong className="uppercase">{cfgSecurityLevel}</strong> (Max {cfgMaxTabSwitches} tab / {cfgMaxFullscreenExits} fs exits)
+                  </span>
+                </div>
+              </div>
+
+              {/* Fast Action Buttons */}
+              <div className="flex flex-col sm:flex-row lg:flex-col gap-2.5 w-full lg:w-auto shrink-0">
+                <button
+                  type="button"
+                  onClick={() => handleTogglePublish(!cfgIsActive)}
+                  disabled={isTogglingPublish}
+                  className={`px-4 py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 shadow-xs transition-all ${
+                    cfgIsActive
+                      ? 'bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300'
+                      : 'bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white'
+                  }`}
+                >
+                  {isTogglingPublish ? (
+                    <span className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <Power className="w-3.5 h-3.5" />
+                  )}
+                  <span>{cfgIsActive ? 'Unpublish Assessment' : 'Publish Assessment'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('settings')}
+                  className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-xl font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition-all"
+                >
+                  <Sliders className="w-3.5 h-3.5" />
+                  <span>Configure Settings & Sections</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('questions')}
+                  className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all border border-slate-200"
+                >
+                  <HelpCircle className="w-3.5 h-3.5 text-slate-600" />
+                  <span>Question Bank ({questions.length})</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Dynamic Section Question Allocation & Pool Health */}
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pb-5 border-b border-slate-100">
+              <div>
+                <h3 className="text-sm font-bold uppercase tracking-wider text-slate-900 flex items-center gap-2">
+                  <Layers className="w-4 h-4 text-blue-600" />
+                  <span>Configured Section Allocation vs Question Bank Availability</span>
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  When a candidate starts their attempt, MySQL randomly samples the configured question quota per section from the Question Bank pool.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowImportQuestionsModal(true)}
+                className="px-3.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-xs font-bold flex items-center gap-1.5 border border-blue-200 transition-colors"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Batch Import Questions</span>
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-5">
+              {[
+                {
+                  key: 'aptitude',
+                  title: 'Quantitative Aptitude',
+                  configured: Number(cfgAptitude) || 0,
+                  bankCount: questions.filter(q => q.section === 'aptitude').length,
+                  color: 'blue',
+                },
+                {
+                  key: 'reasoning',
+                  title: 'Logical Reasoning',
+                  configured: Number(cfgReasoning) || 0,
+                  bankCount: questions.filter(q => q.section === 'reasoning').length,
+                  color: 'indigo',
+                },
+                {
+                  key: 'verbal',
+                  title: 'Verbal Ability',
+                  configured: Number(cfgVerbal) || 0,
+                  bankCount: questions.filter(q => q.section === 'verbal').length,
+                  color: 'purple',
+                },
+                {
+                  key: 'technical',
+                  title: 'Technical Core',
+                  configured: Number(cfgTechnical) || 0,
+                  bankCount: questions.filter(q => q.section === 'technical').length,
+                  color: 'emerald',
+                },
+              ].map((sec) => {
+                const isHealthy = sec.bankCount >= sec.configured;
+                const pct = sec.bankCount > 0 ? Math.min(100, Math.round((sec.bankCount / (sec.configured || 1)) * 100)) : 0;
+                return (
+                  <div key={sec.key} className="bg-slate-50 rounded-xl p-4 border border-slate-200 flex flex-col justify-between space-y-3">
+                    <div>
+                      <div className="flex items-center justify-between text-xs mb-1">
+                        <span className="font-bold text-slate-800">{sec.title}</span>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                          isHealthy ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+                        }`}>
+                          {isHealthy ? 'Pool Ready' : 'Low Pool'}
+                        </span>
+                      </div>
+                      <div className="flex items-baseline gap-2 mt-2">
+                        <span className="text-2xl font-extrabold text-slate-900 font-mono">{sec.configured}</span>
+                        <span className="text-xs text-slate-500 font-medium">per candidate exam</span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5 pt-2 border-t border-slate-200/60">
+                      <div className="flex justify-between text-[11px] text-slate-600">
+                        <span>Question Bank Pool:</span>
+                        <strong className="font-mono text-slate-900">{sec.bankCount} available</strong>
+                      </div>
+                      <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all duration-500 ${
+                            isHealthy ? 'bg-emerald-500' : 'bg-amber-500'
+                          }`}
+                          style={{ width: `${Math.min(100, pct)}%` }}
+                        />
+                      </div>
+                      <div className="text-[10px] text-slate-500 flex justify-between">
+                        <span>Allocation ratio: {sec.bankCount}:{sec.configured}</span>
+                        <span>{pct}% coverage</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Quick Shortcuts & Candidate Funnel */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-gradient-to-br from-blue-900 to-indigo-950 text-white rounded-2xl p-6 flex flex-col justify-between space-y-4 shadow-sm">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-blue-300">Fast Action</span>
+                <h4 className="text-base font-bold text-white mt-1">Import Candidate Roster</h4>
+                <p className="text-xs text-blue-200/80 mt-1 leading-relaxed">
+                  Upload CSV records with candidate details and automatically dispatch credential invitations with unique login passwords.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActiveTab('importer')}
+                className="w-full py-2.5 bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-2"
+              >
+                <Upload className="w-3.5 h-3.5" />
+                <span>Open Candidate Importer</span>
+              </button>
+            </div>
+
+            <div className="bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-2xl p-6 flex flex-col justify-between space-y-4 shadow-sm">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Question Management</span>
+                <h4 className="text-base font-bold text-white mt-1">Expand Question Bank</h4>
+                <p className="text-xs text-slate-300/80 mt-1 leading-relaxed">
+                  Add single questions or bulk import hundreds of questions via JSON or CSV format directly into the MySQL database.
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowAddQuestionModal(true)}
+                  className="flex-1 py-2.5 bg-slate-700 hover:bg-slate-600 active:bg-slate-800 text-white rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Add Question</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowImportQuestionsModal(true)}
+                  className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5"
+                >
+                  <Upload className="w-3.5 h-3.5" />
+                  <span>Batch Import</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="bg-gradient-to-br from-emerald-950 to-emerald-900 text-white rounded-2xl p-6 flex flex-col justify-between space-y-4 shadow-sm">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-300">Live Evaluation</span>
+                <h4 className="text-base font-bold text-white mt-1">Shortlisted Candidates</h4>
+                <p className="text-xs text-emerald-200/80 mt-1 leading-relaxed">
+                  {metrics.cleared} candidate(s) achieved the qualifying cutoff ({cfgCutoff}%) and are ready for interview scheduling.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setStatusFilter('cleared');
+                  setActiveTab('candidates');
+                }}
+                className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-2"
+              >
+                <Users className="w-3.5 h-3.5" />
+                <span>View Cleared Shortlist ({metrics.cleared})</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TAB: ASSESSMENT SETTINGS (MYSQL PERSISTENCE) */}
+      {activeTab === 'settings' && (
+        <form onSubmit={handleSaveConfig} className="space-y-6">
+          {/* Header Bar */}
+          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-blue-700 bg-blue-50 px-2.5 py-1 rounded-md border border-blue-200">
+                  MySQL Assessment Blueprint
+                </span>
+                <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
+                  cfgIsActive ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-600'
+                }`}>
+                  {cfgIsActive ? 'Published' : 'Draft'}
+                </span>
+              </div>
+              <h3 className="text-lg font-bold text-slate-900 mt-1">Assessment Configuration & Security Console</h3>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Saved changes are written to MySQL tables <code className="text-blue-700 font-mono">assessments</code> and <code className="text-blue-700 font-mono">assessment_sections</code> and dynamically applied to all candidate attempts.
+              </p>
+            </div>
+
+            <button
+              type="submit"
+              disabled={isSavingConfig}
+              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold rounded-xl text-xs shadow-md transition-all flex items-center gap-2 whitespace-nowrap"
+            >
+              {isSavingConfig ? (
+                <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <Save className="w-4 h-4" />
+              )}
+              <span>Save Configuration to MySQL</span>
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Card 1: Assessment Info & Publishing */}
+            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-blue-600" />
+                  <span>1. Assessment Title & Description</span>
+                </h4>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                  Assessment Title *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={cfgTitle}
+                  onChange={(e) => setCfgTitle(e.target.value)}
+                  placeholder="e.g. Brainovision Campus Recruitment Assessment — 2026"
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs sm:text-sm font-semibold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                  Description / Purpose *
+                </label>
+                <textarea
+                  rows={3}
+                  required
+                  value={cfgDescription}
+                  onChange={(e) => setCfgDescription(e.target.value)}
+                  placeholder="Brief description displayed to candidates on instructions screen..."
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+                />
+              </div>
+
+              <div className="pt-2 border-t border-slate-100 space-y-3">
+                <div className="flex items-center justify-between p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+                  <div>
+                    <p className="text-xs font-bold text-slate-900">Publish Assessment in MySQL</p>
+                    <p className="text-[11px] text-slate-500">When enabled, verified candidates can authenticate and start tests.</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setCfgIsActive(!cfgIsActive)}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                      cfgIsActive ? 'bg-emerald-600' : 'bg-slate-300'
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                        cfgIsActive ? 'translate-x-6' : 'translate-x-1'
+                      }`}
+                    />
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                      Exam Window Start (Optional)
+                    </label>
+                    <input
+                      type="datetime-local"
+                      value={cfgScheduleStart}
+                      onChange={(e) => setCfgScheduleStart(e.target.value)}
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                      Exam Window End (Optional)
+                    </label>
+                    <input
+                      type="datetime-local"
+                      value={cfgScheduleEnd}
+                      onChange={(e) => setCfgScheduleEnd(e.target.value)}
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 font-mono"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Card 2: Timing, Cutoff & Scoring */}
+            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center gap-2">
+                  <Award className="w-4 h-4 text-emerald-600" />
+                  <span>2. Timing & Qualification Cutoff Criteria</span>
+                </h4>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                  Examination Duration (Minutes) *
+                </label>
+                <div className="flex items-center gap-2 mb-2">
+                  {[30, 45, 60, 90].map((preset) => (
+                    <button
+                      key={preset}
+                      type="button"
+                      onClick={() => setCfgDuration(preset)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                        cfgDuration === preset
+                          ? 'bg-blue-600 text-white shadow-xs'
+                          : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                      }`}
+                    >
+                      {preset} Min
+                    </button>
+                  ))}
+                </div>
+                <input
+                  type="number"
+                  min="5"
+                  max="180"
+                  required
+                  value={cfgDuration}
+                  onChange={(e) => setCfgDuration(Number(e.target.value))}
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs sm:text-sm font-mono text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+                />
+              </div>
+
+              <div className="p-4 rounded-xl bg-blue-50/60 border border-blue-200 space-y-3">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-blue-900 mb-1">
+                      Cutoff Percentage (%) *
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="100"
+                      required
+                      value={cfgCutoff}
+                      onChange={(e) => setCfgCutoff(Number(e.target.value))}
+                      className="w-full px-3 py-2 bg-white border border-blue-300 rounded-xl text-xs sm:text-sm font-bold text-blue-950 font-mono focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    />
+                  </div>
+                  <div className="flex flex-col justify-center">
+                    <span className="text-[11px] font-semibold text-blue-800 uppercase tracking-wider">Required Passing Score:</span>
+                    <span className="text-lg font-extrabold text-blue-900 font-mono">
+                      {((((Number(cfgAptitude) || 0) + (Number(cfgReasoning) || 0) + (Number(cfgVerbal) || 0) + (Number(cfgTechnical) || 0)) * (Number(cfgMarksPerQ) || 1) * (Number(cfgCutoff) || 60)) / 100).toFixed(1)}{' '}
+                      <span className="text-xs font-normal text-blue-700">
+                        / {((Number(cfgAptitude) || 0) + (Number(cfgReasoning) || 0) + (Number(cfgVerbal) || 0) + (Number(cfgTechnical) || 0)) * (Number(cfgMarksPerQ) || 1)} marks
+                      </span>
+                    </span>
+                  </div>
+                </div>
+
+                <div className="pt-2 border-t border-blue-200/80 flex flex-wrap items-center justify-between gap-3">
+                  <label className="flex items-center gap-2 text-xs font-semibold text-blue-900 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={cfgNegativeMarking}
+                      onChange={(e) => setCfgNegativeMarking(e.target.checked)}
+                      className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500"
+                    />
+                    <span>Enable Negative Marking</span>
+                  </label>
+
+                  {cfgNegativeMarking && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-blue-800">Penalty per incorrect:</span>
+                      <input
+                        type="number"
+                        step="0.05"
+                        min="0"
+                        max="2"
+                        value={cfgNegativePenalty}
+                        onChange={(e) => setCfgNegativePenalty(Number(e.target.value))}
+                        className="w-20 px-2 py-1 bg-white border border-blue-300 rounded-lg text-xs font-mono"
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                  Default Marks Per Question
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  max="10"
+                  value={cfgMarksPerQ}
+                  onChange={(e) => setCfgMarksPerQ(Number(e.target.value))}
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-mono text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+                />
+              </div>
+            </div>
+
+            {/* Card 3: Dynamic Section Question Allocation */}
+            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4 lg:col-span-2">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pb-3 border-b border-slate-100">
+                <div>
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center gap-2">
+                    <Layers className="w-4 h-4 text-blue-600" />
+                    <span>3. Dynamic Section Question Quotas (Persisted to MySQL `assessment_sections`)</span>
+                  </h4>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Specifies the exact count of randomized questions candidates receive for each section.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <div className="px-3 py-1 bg-blue-50 text-blue-800 rounded-lg text-xs font-mono font-bold border border-blue-200">
+                    Total Questions: {(Number(cfgAptitude) || 0) + (Number(cfgReasoning) || 0) + (Number(cfgVerbal) || 0) + (Number(cfgTechnical) || 0)}
+                  </div>
+                  <div className="px-3 py-1 bg-emerald-50 text-emerald-800 rounded-lg text-xs font-mono font-bold border border-emerald-200">
+                    Total Marks: {((Number(cfgAptitude) || 0) + (Number(cfgReasoning) || 0) + (Number(cfgVerbal) || 0) + (Number(cfgTechnical) || 0)) * (Number(cfgMarksPerQ) || 1)}
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+                  <div className="flex justify-between items-center">
+                    <label className="block text-xs font-bold text-slate-800">Quantitative Aptitude</label>
+                    <span className="text-[10px] font-mono text-slate-500">
+                      Bank: {questions.filter(q => q.section === 'aptitude').length}
+                    </span>
+                  </div>
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    required
+                    value={cfgAptitude}
+                    onChange={(e) => setCfgAptitude(Number(e.target.value))}
+                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-base font-bold font-mono text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  />
+                  <p className="text-[10px] text-slate-500">
+                    {Number(cfgAptitude) * (Number(cfgMarksPerQ) || 1)} marks total
+                  </p>
+                </div>
+
+                <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+                  <div className="flex justify-between items-center">
+                    <label className="block text-xs font-bold text-slate-800">Logical Reasoning</label>
+                    <span className="text-[10px] font-mono text-slate-500">
+                      Bank: {questions.filter(q => q.section === 'reasoning').length}
+                    </span>
+                  </div>
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    required
+                    value={cfgReasoning}
+                    onChange={(e) => setCfgReasoning(Number(e.target.value))}
+                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-base font-bold font-mono text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  />
+                  <p className="text-[10px] text-slate-500">
+                    {Number(cfgReasoning) * (Number(cfgMarksPerQ) || 1)} marks total
+                  </p>
+                </div>
+
+                <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+                  <div className="flex justify-between items-center">
+                    <label className="block text-xs font-bold text-slate-800">Verbal Ability</label>
+                    <span className="text-[10px] font-mono text-slate-500">
+                      Bank: {questions.filter(q => q.section === 'verbal').length}
+                    </span>
+                  </div>
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    required
+                    value={cfgVerbal}
+                    onChange={(e) => setCfgVerbal(Number(e.target.value))}
+                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-base font-bold font-mono text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  />
+                  <p className="text-[10px] text-slate-500">
+                    {Number(cfgVerbal) * (Number(cfgMarksPerQ) || 1)} marks total
+                  </p>
+                </div>
+
+                <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+                  <div className="flex justify-between items-center">
+                    <label className="block text-xs font-bold text-slate-800">Technical Core</label>
+                    <span className="text-[10px] font-mono text-slate-500">
+                      Bank: {questions.filter(q => q.section === 'technical').length}
+                    </span>
+                  </div>
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    required
+                    value={cfgTechnical}
+                    onChange={(e) => setCfgTechnical(Number(e.target.value))}
+                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-base font-bold font-mono text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  />
+                  <p className="text-[10px] text-slate-500">
+                    {Number(cfgTechnical) * (Number(cfgMarksPerQ) || 1)} marks total
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Card 4: Anti-Cheating & Proctoring Limits */}
+            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4 lg:col-span-2">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center gap-2">
+                  <ShieldAlert className="w-4 h-4 text-purple-600" />
+                  <span>4. Anti-Cheating & Security Violation Limits</span>
+                </h4>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                    Security Level
+                  </label>
+                  <select
+                    value={cfgSecurityLevel}
+                    onChange={(e) => setCfgSecurityLevel(e.target.value as any)}
+                    className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  >
+                    <option value="strict">Strict (Auto-terminate immediately)</option>
+                    <option value="standard">Standard (Warnings + termination)</option>
+                    <option value="lenient">Lenient (Log violations only)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                    Max Tab Switch Strikes
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="10"
+                    required
+                    value={cfgMaxTabSwitches}
+                    onChange={(e) => setCfgMaxTabSwitches(Number(e.target.value))}
+                    className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-mono font-semibold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  />
+                  <span className="text-[10px] text-slate-500">Candidate paper locked after {cfgMaxTabSwitches} switch(es)</span>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                    Max Fullscreen Exit Strikes
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="10"
+                    required
+                    value={cfgMaxFullscreenExits}
+                    onChange={(e) => setCfgMaxFullscreenExits(Number(e.target.value))}
+                    className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-mono font-semibold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  />
+                  <span className="text-[10px] text-slate-500">Candidate paper locked after {cfgMaxFullscreenExits} exit(s)</span>
+                </div>
+              </div>
+
+              {/* Submit Button in Settings */}
+              <div className="pt-4 border-t border-slate-100 flex items-center justify-end">
+                <button
+                  type="submit"
+                  disabled={isSavingConfig}
+                  className="px-8 py-3.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold rounded-xl text-xs uppercase tracking-wider shadow-md transition-all flex items-center gap-2"
+                >
+                  {isSavingConfig ? (
+                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <Save className="w-4 h-4" />
+                  )}
+                  <span>Save Assessment Configuration to MySQL Database</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </form>
+      )}
+
+      {/* 3. TAB: LIVE CANDIDATE MONITORING & RESULTS */}
+      {activeTab === 'candidates' && (
         <div className="space-y-4">
           {/* Search & Filter Toolbar */}
           <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col sm:flex-row gap-4 justify-between">
@@ -1458,12 +2153,33 @@ export function AdminAssessment() {
 
                 <button
                   type="button"
+                  onClick={handleDeduplicateQuestions}
+                  disabled={isDeduplicating}
+                  className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 border border-slate-200 font-bold text-xs rounded-xl flex items-center gap-1.5 shadow-xs transition-all whitespace-nowrap"
+                  title="Remove duplicate questions based on problem text"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-blue-600" />
+                  <span>{isDeduplicating ? 'Cleaning...' : 'Deduplicate'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setShowImportQuestionsModal(true)}
+                  className="px-3.5 py-2 bg-indigo-50 hover:bg-indigo-100 active:bg-indigo-200 text-indigo-700 border border-indigo-200 font-bold text-xs rounded-xl flex items-center gap-1.5 shadow-xs transition-all whitespace-nowrap"
+                  title="Bulk import questions using JSON or CSV format"
+                >
+                  <Upload className="w-3.5 h-3.5 text-indigo-600" />
+                  <span>Batch Import</span>
+                </button>
+
+                <button
+                  type="button"
                   onClick={handleClearAllQuestions}
                   className="px-3.5 py-2 bg-red-50 hover:bg-red-100 active:bg-red-200 text-red-700 border border-red-200 font-bold text-xs rounded-xl flex items-center gap-1.5 shadow-xs transition-all whitespace-nowrap"
                   title="Remove all questions from the question bank"
                 >
                   <Trash2 className="w-4 h-4 text-red-600" />
-                  <span>Remove All Sample Questions</span>
+                  <span>Clear All</span>
                 </button>
 
                 <button
@@ -1472,7 +2188,7 @@ export function AdminAssessment() {
                   className="px-4 py-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 shadow-sm transition-all whitespace-nowrap"
                 >
                   <Plus className="w-4 h-4" />
-                  <span>Add New Question</span>
+                  <span>Add Question</span>
                 </button>
               </div>
             </div>
@@ -2070,6 +2786,115 @@ export function AdminAssessment() {
                       </button>
                     </div>
                   </form>
+                </motion.div>
+              </div>
+            )}
+          </AnimatePresence>
+
+          {/* BATCH IMPORT QUESTIONS MODAL */}
+          <AnimatePresence>
+            {showImportQuestionsModal && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full border border-blue-100 overflow-hidden my-8"
+                >
+                  <div className="p-6 bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 text-white flex items-center justify-between">
+                    <div>
+                      <span className="text-xs font-bold uppercase tracking-wider text-blue-200">
+                        Batch Question Import
+                      </span>
+                      <h3 className="text-lg font-bold text-white mt-0.5">
+                        Bulk Import Questions (JSON or CSV)
+                      </h3>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowImportQuestionsModal(false)}
+                      className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  <div className="p-6 space-y-4 text-xs">
+                    {importQuestionsMsg && (
+                      <div className={`p-3.5 rounded-xl border text-xs font-semibold ${
+                        importQuestionsMsg.includes('Successfully')
+                          ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                          : 'bg-red-50 border-red-200 text-red-800'
+                      }`}>
+                        {importQuestionsMsg}
+                      </div>
+                    )}
+
+                    <div>
+                      <p className="text-slate-600 mb-2 leading-relaxed">
+                        Paste questions formatted either as a <strong>JSON array</strong> or as comma-separated <strong>CSV</strong>. Questions will be validated, deduplicated, and inserted directly into the MySQL database.
+                      </p>
+                      
+                      <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 text-[11px] font-mono text-slate-700 space-y-1">
+                        <div className="font-bold text-slate-800 uppercase tracking-wider text-[10px]">Expected CSV Format:</div>
+                        <div>section, questionText, optionA, optionB, optionC, optionD, correctOption(A/B/C/D), difficulty(easy/medium/hard), marks, explanation</div>
+                        <div className="text-slate-400 text-[10px] mt-1">Sections: aptitude | reasoning | verbal | technical</div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                        Paste Raw JSON or CSV Content *
+                      </label>
+                      <textarea
+                        rows={10}
+                        required
+                        value={importQuestionsText}
+                        onChange={(e) => setImportQuestionsText(e.target.value)}
+                        placeholder={`aptitude, "What is 15% of 240?", "32", "36", "40", "42", "B", "easy", 1, "15% of 240 = 0.15 * 240 = 36."\ntechnical, "Which data structure uses LIFO?", "Queue", "Stack", "Array", "Linked List", "B", "easy", 1, "Stack operates on Last-In-First-Out."`}
+                        className="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl font-mono text-xs text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+                      />
+                    </div>
+
+                    <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setImportQuestionsText('');
+                          setImportQuestionsMsg(null);
+                        }}
+                        className="text-xs text-slate-500 hover:text-slate-800"
+                      >
+                        Clear Text
+                      </button>
+
+                      <div className="flex items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={() => setShowImportQuestionsModal(false)}
+                          className="px-4 py-2.5 rounded-xl border border-slate-300 text-slate-700 font-semibold hover:bg-slate-50 transition-colors text-xs"
+                        >
+                          Cancel
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={handleBatchImportQuestions}
+                          disabled={isImportingQuestions || !importQuestionsText.trim()}
+                          className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold rounded-xl shadow-md transition-all flex items-center gap-2 text-xs disabled:opacity-50"
+                        >
+                          {isImportingQuestions ? (
+                            <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          ) : (
+                            <>
+                              <Upload className="w-4 h-4" />
+                              <span>Validate & Import Questions</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 </motion.div>
               </div>
             )}
